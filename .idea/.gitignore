@@ -1,0 +1,8 @@
+# Default ignored files
+/shelf/
+/workspace.xml
+# Datasource local storage ignored files
+/../../../../../../../../../../:\Data Engineering\Big Data\Big Data projects\access data\TEST RUN\EX4\__pycache__\mini project (prase last.fm scrobble records)\.idea/dataSources/
+/dataSources.local.xml
+# Editor-based HTTP Client requests
+/httpRequests/
