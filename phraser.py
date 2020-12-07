@@ -13,6 +13,7 @@ class pagePhrase:
         self.__records = pd.DataFrame(columns=['Artist', 'Album', 'Track', 'Time'])
 
     def read_page(self):
+        """read each page and return the data frame which contains artist, album, track, timestamp"""
         pages = self.page_count()
         url = self.__mainURL + self.__profile
         pgbr = ProgressBar()
@@ -27,6 +28,7 @@ class pagePhrase:
         return self.__records.reset_index()
 
     def page_count(self):
+        """detect how much pages attached to profile"""
         url = self.__mainURL + self.__profile + self.__pageToken + '1'
         html = req.urlopen(url)
         page = bs(html, 'lxml')
@@ -38,6 +40,7 @@ class pagePhrase:
         return pageCount
 
     def track_lists(self, page):
+        """return <tr> tags which contain data about scrobble"""
         html = req.urlopen(page)
         DOM = bs(html, 'lxml')
         trackList = DOM.find_all('tr', class_='chartlist-row')
@@ -45,6 +48,7 @@ class pagePhrase:
         return trackList
 
     def extract_data(self, data):
+        """formatting and extracting scrobble data from <tr> tags"""
         tds = [[td for td in tr.find_all('td')] for tr in data]
         df = pd.DataFrame(tds, index=None)
         df = df.drop([0, 2, 5, 6], axis=1)
