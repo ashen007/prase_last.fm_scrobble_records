@@ -1,5 +1,6 @@
 import pandas as pd
 import urllib.request as req
+from progressbar import ProgressBar
 from bs4 import BeautifulSoup as bs
 
 
@@ -14,13 +15,14 @@ class pagePhrase:
     def read_page(self):
         pages = self.page_count()
         url = self.__mainURL + self.__profile
+        pgbr = ProgressBar()
 
         for i in range(1, (pages + 1)):
             pageURL = url + self.__pageToken + f'{i}'
             records_in_page = self.track_lists(pageURL)
             formatted_record = self.extract_data(records_in_page)
             self.__records = self.__records.append(formatted_record)
-            print(f'{i} pages done')
+            print(pageURL)
 
         return self.__records.reset_index()
 
