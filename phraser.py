@@ -43,7 +43,7 @@ class pagePhrase:
         """return <tr> tags which contain data about scrobble"""
         html = req.urlopen(page)
         DOM = bs(html, 'lxml')
-        trackList = DOM.find_all('tr', class_='chartlist-row')
+        trackList = (DOM.find_all('tr', class_='chartlist-row'))
 
         return trackList
 
