@@ -1,6 +1,6 @@
 import pandas as pd
+import requests as r
 import urllib.request as req
-from progressbar import ProgressBar
 from bs4 import BeautifulSoup as bs
 
 
@@ -16,14 +16,12 @@ class pagePhrase:
         """read each page and return the data frame which contains artist, album, track, timestamp"""
         pages = self.page_count()
         url = self.__mainURL + self.__profile
-        pgbr = ProgressBar()
 
-        for i in range(1, (pages + 1)):
+        for i in range(1, 301):
             pageURL = url + self.__pageToken + f'{i}'
             records_in_page = self.track_lists(pageURL)
             formatted_record = self.extract_data(records_in_page)
             self.__records = self.__records.append(formatted_record)
-            print(pageURL)
 
         return self.__records.reset_index()
 
@@ -41,9 +39,25 @@ class pagePhrase:
 
     def track_lists(self, page):
         """return <tr> tags which contain data about scrobble"""
-        html = req.urlopen(page)
-        DOM = bs(html, 'lxml')
-        trackList = (DOM.find_all('tr', class_='chartlist-row'))
+
+        #  re form this function with error catching while reading page
+        tries = 0
+        response = r.get(page)
+
+        if response.status_code == 200:
+            print('success', page)
+            html = response.content.decode(response.encoding)
+        else:
+            while response.status_code != 200:
+                tries += 1
+                response = r.get(page)
+                if response.status_code == 200:
+                    print(page, tries, response.status_code)
+                    html = response.content.decode(response.encoding)
+                    break
+
+        DOM = bs(html, 'html.parser')
+        trackList = DOM.find_all('tr', class_='chartlist-row')
 
         return trackList
 
