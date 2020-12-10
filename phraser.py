@@ -11,13 +11,28 @@ class pagePhrase:
         self.__pageToken = f'/library?page='
         self.__profile = username
         self.__records = pd.DataFrame(columns=['Artist', 'Album', 'Track', 'Time'])
+        self.baseURL = 'http://ws.audioscrobbler.com/2.0/'
+        self.__headers = {'user-agent': 'user listing trend analyzer'}
+        self.__payload = {
+            'api_key': '6954efc3b2ff0691fb109ce6f8dca9b6',
+            'format': 'json'
+        }
+
+    def __lastfm_artist_get(self, method, artist):
+        """pull request to last.fm api artist method"""
+        self.__payload['method'] = method
+        self.__payload['artist'] = artist
+
+        return r.get(url=self.__mainURL,
+                     headers=self.__headers,
+                     params=self.__payload)
 
     def read_page(self):
         """read each page and return the data frame which contains artist, album, track, timestamp"""
         pages = self.page_count()
         url = self.__mainURL + self.__profile
 
-        for i in range(1, 301):
+        for i in range(1, (pages + 1)):
             pageURL = url + self.__pageToken + f'{i}'
             records_in_page = self.track_lists(pageURL)
             formatted_record = self.extract_data(records_in_page)
