@@ -1,3 +1,4 @@
+import json
 import pandas as pd
 import requests as r
 import urllib.request as req
@@ -11,21 +12,27 @@ class pagePhrase:
         self.__pageToken = f'/library?page='
         self.__profile = username
         self.__records = pd.DataFrame(columns=['Artist', 'Album', 'Track', 'Time'])
-        self.baseURL = 'http://ws.audioscrobbler.com/2.0/'
+        self.__baseURL = 'http://ws.audioscrobbler.com/2.0/'
         self.__headers = {'user-agent': 'user listing trend analyzer'}
         self.__payload = {
             'api_key': '6954efc3b2ff0691fb109ce6f8dca9b6',
             'format': 'json'
         }
 
-    def __lastfm_artist_get(self, method, artist):
+    def __lastfm_get(self, obj):
         """pull request to last.fm api artist method"""
-        self.__payload['method'] = method
-        self.__payload['artist'] = artist
+        self.__payload = {**self.__payload, **obj}
 
-        return r.get(url=self.__mainURL,
+        return r.get(url=self.__baseURL,
                      headers=self.__headers,
                      params=self.__payload)
+
+    def lastfm_output(self, obj):
+        if self.__lastfm_get(obj).status_code == 200:
+            data = self.__lastfm_get(obj)
+            data = data.json()
+
+        return json.dumps(data, sort_keys=True, indent=4)
 
     def read_page(self):
         """read each page and return the data frame which contains artist, album, track, timestamp"""
