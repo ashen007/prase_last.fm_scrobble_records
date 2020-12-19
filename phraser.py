@@ -1,5 +1,6 @@
 import json
 import re
+import numpy as np
 import pandas as pd
 import requests as r
 import urllib.request as req
@@ -25,7 +26,7 @@ class pagePhrase:
         pages = self.page_count()
         url = self.__mainURL + self.__profile
 
-        for i in range(1, 101):
+        for i in range(1, pages + 1):
             pageURL = url + self.__pageToken + f'{i}'
             records_in_page = self.track_lists(pageURL)
             formatted_record = self.extract_data(records_in_page)
@@ -47,17 +48,25 @@ class pagePhrase:
                      params=self.__payload).json()
 
     def get_tags(self, x):
+        artist, track = x[0]
         payload = {'method': 'track.getInfo',
-                   'artist': x[1]['Artist'],
-                   'track': x[1]['Track']
+                   'artist': artist,
+                   'track': track
                    }
 
         getter = self.lastfm_get(payload)
 
-        return [getter['track']['duration'],
-                getter['track']['listeners'],
-                getter['track']['playcount'],
-                ','.join([t['name'] for t in getter['track']['toptags']['tag']])]
+        if 'error' in getter and getter['error'] == 6:
+            result = [artist, track, np.nan, np.nan, np.nan, np.nan]
+        else:
+            result = [artist,
+                      track,
+                      getter['track']['duration'],
+                      getter['track']['listeners'],
+                      getter['track']['playcount'],
+                      ','.join([t['name'] for t in getter['track']['toptags']['tag']])]
+
+        return result
 
     def combiner(self):
         df_temp = []
