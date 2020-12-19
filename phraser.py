@@ -1,4 +1,5 @@
 import json
+import re
 import pandas as pd
 import requests as r
 import urllib.request as req
@@ -19,33 +20,76 @@ class pagePhrase:
             'format': 'json'
         }
 
-    def __lastfm_get(self, obj):
-        """pull request to last.fm api artist method"""
-        self.__payload = {**self.__payload, **obj}
-
-        return r.get(url=self.__baseURL,
-                     headers=self.__headers,
-                     params=self.__payload)
-
-    def lastfm_output(self, obj):
-        if self.__lastfm_get(obj).status_code == 200:
-            data = self.__lastfm_get(obj)
-            data = data.json()
-
-        return json.dumps(data, sort_keys=True, indent=4)
-
-    def read_page(self):
+    def main(self):
         """read each page and return the data frame which contains artist, album, track, timestamp"""
         pages = self.page_count()
         url = self.__mainURL + self.__profile
 
-        for i in range(1, (pages + 1)):
+        for i in range(1, 101):
             pageURL = url + self.__pageToken + f'{i}'
             records_in_page = self.track_lists(pageURL)
             formatted_record = self.extract_data(records_in_page)
             self.__records = self.__records.append(formatted_record)
 
-        return self.__records.reset_index()
+        self.__records.reset_index(inplace=True)
+        self.__records = self.formatting_date()
+        self.__records.drop('index', axis=1, inplace=True)
+        # self.combiner()
+
+        return self.__records
+
+    def lastfm_get(self, obj):
+        """pull request to last.fm api artist method"""
+        self.__payload = {**self.__payload, **obj}
+
+        return r.get(url=self.__baseURL,
+                     headers=self.__headers,
+                     params=self.__payload).json()
+
+    def get_tags(self, x):
+        payload = {'method': 'track.getInfo',
+                   'artist': x[1]['Artist'],
+                   'track': x[1]['Track']
+                   }
+
+        getter = self.lastfm_get(payload)
+
+        return [getter['track']['duration'],
+                getter['track']['listeners'],
+                getter['track']['playcount'],
+                ','.join([t['name'] for t in getter['track']['toptags']['tag']])]
+
+    def combiner(self):
+        df_temp = []
+
+        for row in self.__records[['Artist', 'Track']].iterrows():
+            temp = self.get_tags(row)
+            # print(temp)
+            df_temp.append(temp)
+
+        df_temp = pd.DataFrame(df_temp, columns=['Duration', 'Listeners', 'PlayCount', 'Tags'])
+        self.__records = pd.concat([self.__records, df_temp], axis=1)
+
+    def formatting_date(self):
+        """clearly formatting time column to day, date, time, year, month"""
+        patterns = {'Day': re.compile(r"(^[a-zA-Z]+)"),
+                    'Month': re.compile(r"(\b[a-zA-Z]{3}\b)"),
+                    'Date': re.compile(r"\s(\b[0-9]{1,}\b)\s"),
+                    'Year': re.compile(r"([0-9]{4})"),
+                    'TimeStamp': re.compile(r"([0-9]{1,}:[0-9]{2}[{a|p}]m)")
+                    }
+
+        for key, value in patterns.items():
+            if key in ['Date', 'Year']:
+                self.__records[key] = self.__records['Time'].str.extract(value).astype('int64')
+            else:
+                self.__records[key] = self.__records['Time'].str.extract(value)
+
+        self.__records = self.__records.drop('Time', axis=1)
+        self.__records = self.__records.rename(columns={'TimeStamp': 'Time'})
+        self.__records['Time'] = self.__records['Time'].apply(lambda x: pd.to_datetime(x).strftime('%H:%M'))
+
+        return self.__records
 
     def page_count(self):
         """detect how much pages attached to profile"""

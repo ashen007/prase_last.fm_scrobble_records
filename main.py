@@ -8,6 +8,6 @@ import phraser
 # Press the green button in the gutter to run the script.
 if __name__ == '__main__':
     ashen = phraser.pagePhrase('ashen077')
-    data = ashen.read_page()
+    data = ashen.main()
 
 # See PyCharm help at https://www.jetbrains.com/help/pycharm/
