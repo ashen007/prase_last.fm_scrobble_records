@@ -23,6 +23,10 @@ class pagePhrase:
 
     def main(self):
         """read each page and return the data frame which contains artist, album, track, timestamp"""
+        # page_count get pages has to read
+        # track_lists extract track record from html code
+        # extract_data reformat output data from track_lists
+        # formatting_date reformat timestamp column to five columns
         pages = self.page_count()
         url = self.__mainURL + self.__profile
 
@@ -42,6 +46,7 @@ class pagePhrase:
 
     def lastfm_get(self, obj):
         """pull request to last.fm api artist method"""
+        # make requests from last.fm api to get
         self.__payload = {**self.__payload, **obj}
 
         return r.get(url=self.__baseURL,
@@ -49,6 +54,8 @@ class pagePhrase:
                      params=self.__payload).json()
 
     def get_tags(self, x):
+        """returns tags, play count, duration, listener count for input track"""
+        # get lastfm_get returns and reformat them
         artist, track = x[0]
         payload = {'method': 'track.getInfo',
                    'artist': artist,
@@ -70,6 +77,7 @@ class pagePhrase:
         return result
 
     def combiner(self):
+        # create dataframe from get_tags returns
         i = 0
         df_temp = []
         attribute = self.__records.groupby(['Artist', 'Track'])[['Track']].count()
@@ -119,7 +127,6 @@ class pagePhrase:
 
     def track_lists(self, page):
         """return <tr> tags which contain data about scrobble"""
-
         #  re form this function with error catching while reading page
         tries = 0
         response = r.get(page)
