@@ -31,11 +31,12 @@ class pagePhrase:
             records_in_page = self.track_lists(pageURL)
             formatted_record = self.extract_data(records_in_page)
             self.__records = self.__records.append(formatted_record)
+            print(i, end='\r')
 
         self.__records.reset_index(inplace=True)
         self.__records = self.formatting_date()
         self.__records.drop('index', axis=1, inplace=True)
-        # self.combiner()
+        self.combiner()
 
         return self.__records
 
@@ -69,15 +70,19 @@ class pagePhrase:
         return result
 
     def combiner(self):
+        i = 0
         df_temp = []
+        attribute = self.__records.groupby(['Artist', 'Track'])[['Track']].count()
+        print()
 
-        for row in self.__records[['Artist', 'Track']].iterrows():
+        for row in attribute.iterrows():
+            i += 1
             temp = self.get_tags(row)
-            # print(temp)
             df_temp.append(temp)
+            print(i, '\r')
 
-        df_temp = pd.DataFrame(df_temp, columns=['Duration', 'Listeners', 'PlayCount', 'Tags'])
-        self.__records = pd.concat([self.__records, df_temp], axis=1)
+        df_temp = pd.DataFrame(df_temp, columns=['Artist', 'Track','Duration', 'Listeners', 'PlayCount', 'Tags'])
+        self.__records = pd.merge(self.__records, df_temp, on=['Artist','Track'], how='left')
 
     def formatting_date(self):
         """clearly formatting time column to day, date, time, year, month"""
@@ -120,14 +125,14 @@ class pagePhrase:
         response = r.get(page)
 
         if response.status_code == 200:
-            print('success', page)
+            # print('success', page)
             html = response.content.decode(response.encoding)
         else:
             while response.status_code != 200:
                 tries += 1
                 response = r.get(page)
                 if response.status_code == 200:
-                    print(page, tries, response.status_code)
+                    # print(page, tries, response.status_code)
                     html = response.content.decode(response.encoding)
                     break
 
